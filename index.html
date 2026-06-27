@@ -6,6 +6,7 @@
     <title>TravelVoice - Better Tourism Through Feedback</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 </head>
 <body>
 
@@ -114,15 +115,6 @@
         </div>
 
         <div id="searchResults" class="search-results"></div>
-
-        <!-- ===== MEDIA GALLERY BY PLACE ===== -->
-        <div class="section-header" style="margin-top:60px;">
-            <h2>Place Gallery</h2>
-            <p>Photos and videos uploaded by the community.</p>
-        </div>
-        <div id="mediaGallery" class="media-gallery">
-            <p style="text-align:center;color:var(--text-light);">Loading gallery...</p>
-        </div>
     </div>
 </section>
 
@@ -185,15 +177,6 @@
                     <button class="btn btn-sm btn-outline review-btn" data-place="Peace Stupa">Write Review</button>
                 </div>
             </div>
-        </div>
-
-        <!-- ===== RECENT REVIEWS FROM DATABASE ===== -->
-        <div class="section-header" style="margin-top:60px;">
-            <h2>Recent Reviews</h2>
-            <p>Latest feedback from travelers.</p>
-        </div>
-        <div id="reviewsList" class="reviews-list">
-            <p style="text-align:center;color:var(--text-light);">Loading reviews...</p>
         </div>
     </div>
 </section>
@@ -319,48 +302,6 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- ================ ADMIN: MEDIA UPLOAD PANEL ================ -->
-        <div class="section-header" style="margin-top:50px;">
-            <h2>Upload Place Media</h2>
-            <p>Add photos and videos for any place. Supported: JPG, PNG, GIF, WebP, MP4, WebM</p>
-        </div>
-        <div class="form-container" style="max-width:700px;">
-            <form id="mediaUploadForm" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label><i class="fas fa-map-marker-alt"></i> Place Name</label>
-                    <input type="text" id="mediaPlaceName" list="placeList" placeholder="e.g. Hotel Himalayan" required>
-                    <datalist id="placeList">
-                        <option value="Hotel Himalayan">
-                        <option value="Mo:Mo Station">
-                        <option value="Sarangkot View Point">
-                        <option value="Peace Stupa">
-                        <option value="Pokhara Bus Terminal">
-                        <option value="City Taxi Service">
-                        <option value="Lake View Restaurant">
-                        <option value="Fewa Park">
-                    </datalist>
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-images"></i> Select Files</label>
-                    <input type="file" id="mediaFiles" name="media[]" multiple accept="image/*,video/mp4,video/webm,video/ogg" required>
-                    <p style="font-size:.8rem;color:var(--text-light);margin-top:6px;">You can select multiple files at once.</p>
-                </div>
-                <button type="submit" class="btn btn-primary btn-block">
-                    <i class="fas fa-upload"></i> Upload
-                </button>
-            </form>
-            <div id="uploadProgress" class="toast"></div>
-        </div>
-
-        <!-- Admin: manage uploaded media -->
-        <div style="margin-top:30px;">
-            <h3 style="margin-bottom:16px;">Manage Media</h3>
-            <div id="adminMediaList" class="media-admin-grid">
-                <p style="color:var(--text-light);">Select a place to view its media.</p>
-            </div>
-        </div>
-
     </div>
 </section>
 

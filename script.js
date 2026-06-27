@@ -1,28 +1,112 @@
-// ================================================================
-// TRAVELVOICE - FRONTEND SCRIPT (PHP Backend)
-// ================================================================
-// All data is stored in MySQL via PHP API endpoints.
-// API base URL — change this if the server is remote.
-// ================================================================
+;(function() {
+'use strict';
 
-const API_BASE = '/travelvoice/api';
+// ================== LOCALSTORAGE DATA LAYER ==================
 
-// ==================== UTILITY: API Call Helper ====================
-
-async function apiCall(endpoint, method = 'GET', body = null) {
-    const options = {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-    };
-    if (body) options.body = JSON.stringify(body);
-    const res = await fetch(API_BASE + endpoint, options);
-    const data = await res.json();
-    if (!res.ok && data.error) throw new Error(data.error);
-    return data;
+function lsGet(key, def) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e) { return def; }
+}
+function lsSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
 }
 
-// ==================== Mobile Hamburger Menu ====================
+function genId() {
+  return Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+}
+
+// Users
+function getUsers() { return lsGet('tv_users', []); }
+function saveUsers(u) { lsSet('tv_users', u); }
+
+function getCurrentUser() { return lsGet('tv_current_user', null); }
+function setCurrentUser(u) {
+  lsSet('tv_current_user', u);
+  currentUser = u;
+  updateAuthUI();
+}
+function clearCurrentUser() {
+  localStorage.removeItem('tv_current_user');
+  currentUser = null;
+  updateAuthUI();
+}
+
+function createUser(name, email, password, role) {
+  const users = getUsers();
+  if (users.find(u => u.email === email)) return { error: 'Email already registered.' };
+  const user = { id: genId(), name, email, password, role, created_at: new Date().toISOString() };
+  users.push(user);
+  saveUsers(users);
+  return { user };
+}
+
+function authenticateUser(email, password) {
+  const users = getUsers();
+  const user = users.find(u => u.email === email && u.password === password);
+  if (!user) return { error: 'Invalid email or password.' };
+  return { user: { id: user.id, name: user.name, email: user.email, role: user.role } };
+}
+
+// Reviews
+function getReviews() { return lsGet('tv_reviews', []); }
+function saveReviews(r) { lsSet('tv_reviews', r); }
+
+function addReview(place, rating, review, userName) {
+  const reviews = getReviews();
+  const r = { id: genId(), place, rating, review, user_name: userName, created_at: new Date().toISOString() };
+  reviews.push(r);
+  saveReviews(reviews);
+  return r;
+}
+
+function getReviewsByPlace(place) {
+  return getReviews().filter(r => r.place.toLowerCase() === place.toLowerCase());
+}
+
+// Complaints
+function getComplaints() { return lsGet('tv_complaints', []); }
+function saveComplaints(c) { lsSet('tv_complaints', c); }
+
+function addComplaint(name, place, title, description, userId) {
+  const complaints = getComplaints();
+  const c = { id: genId(), user_id: userId || null, name, place, title, description, status: 'pending', created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+  complaints.push(c);
+  saveComplaints(complaints);
+  return c;
+}
+
+function resolveComplaintById(id) {
+  const complaints = getComplaints();
+  const c = complaints.find(x => x.id === id);
+  if (c) { c.status = 'resolved'; c.updated_at = new Date().toISOString(); saveComplaints(complaints); }
+  return c;
+}
+
+// Seed demo admin if not present
+(function seedDemo() {
+  const users = getUsers();
+  if (!users.find(u => u.email === 'admin@travelvoice.com')) {
+    users.push({
+      id: 'admin_demo',
+      name: 'Admin',
+      email: 'admin@travelvoice.com',
+      password: 'admin123',
+      role: 'admin',
+      created_at: new Date().toISOString()
+    });
+  }
+  saveUsers(users);
+
+  const complaints = getComplaints();
+  if (complaints.length === 0) {
+    complaints.push(
+      { id: 'c1', user_id: null, name: 'Ram', place: 'Hotel Himalayan Pokhara', title: 'Overcharged in Hotel', description: 'They charged me extra for room service without my consent.', status: 'pending', created_at: new Date(Date.now() - 86400000).toISOString(), updated_at: new Date(Date.now() - 86400000).toISOString() },
+      { id: 'c2', user_id: null, name: 'Sita', place: 'Lakeside Restaurant', title: 'Dirty Environment', description: 'The tables were sticky and the floor was dirty.', status: 'resolved', created_at: new Date(Date.now() - 172800000).toISOString(), updated_at: new Date(Date.now() - 86400000).toISOString() }
+    );
+    saveComplaints(complaints);
+  }
+})();
+
+// ================== NAVIGATION ==================
 
 const hamburger = document.getElementById('hamburger');
 const navMenu = document.getElementById('nav-menu');
@@ -36,8 +120,6 @@ document.querySelectorAll('#nav-menu a').forEach(link => {
         navMenu.classList.remove('open');
     });
 });
-
-// ==================== Active Nav Link on Scroll ====================
 
 const sections = document.querySelectorAll('section[id]');
 const navLinks = document.querySelectorAll('#nav-menu a');
@@ -59,7 +141,7 @@ function updateActiveNav() {
 window.addEventListener('scroll', updateActiveNav);
 window.addEventListener('load', updateActiveNav);
 
-// ==================== Modal System ====================
+// ================== MODAL ==================
 
 const modalOverlay = document.getElementById('modalOverlay');
 const modalContent = document.getElementById('modalContent');
@@ -84,7 +166,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeModal();
 });
 
-// ==================== Toast System ====================
+// ================== TOAST ==================
 
 function showToast(message, type = 'success') {
     const toast = document.getElementById('complaintToast');
@@ -95,13 +177,20 @@ function showToast(message, type = 'success') {
     }, 3500);
 }
 
-// ==================== Dark Mode ====================
+// ================== THEME ==================
+
+function getStorage(key, def) {
+  try { return localStorage.getItem(key) || def; } catch(e) { return def; }
+}
+function setStorage(key, val) {
+  try { localStorage.setItem(key, val); } catch(e) {}
+}
 
 const themeToggle = document.getElementById('themeToggle');
 const themeIcon = themeToggle.querySelector('i');
 
 function getTheme() {
-    return localStorage.getItem('tv_theme') || 'light';
+    return getStorage('tv_theme', 'light');
 }
 
 function setTheme(theme) {
@@ -112,7 +201,7 @@ function setTheme(theme) {
         document.documentElement.removeAttribute('data-theme');
         themeIcon.className = 'fas fa-moon';
     }
-    localStorage.setItem('tv_theme', theme);
+    setStorage('tv_theme', theme);
 }
 
 setTheme(getTheme());
@@ -121,7 +210,7 @@ themeToggle.addEventListener('click', () => {
     setTheme(getTheme() === 'dark' ? 'light' : 'dark');
 });
 
-// ==================== Auth UI State ====================
+// ================== AUTH UI ==================
 
 const authButtons = document.getElementById('authButtons');
 const userBadge = document.getElementById('userBadge');
@@ -144,8 +233,6 @@ function updateAuthUI() {
     updateDashboardAccess();
 }
 
-// ==================== Admin Access Control ====================
-
 function updateDashboardAccess() {
     const dashboardSection = document.getElementById('dashboard');
     const navDashboard = document.getElementById('navDashboard');
@@ -160,21 +247,14 @@ function updateDashboardAccess() {
     }
 }
 
-// ==================== Check Session on Page Load ====================
+// Restore session
+const savedUser = getCurrentUser();
+if (savedUser) {
+  currentUser = savedUser;
+  updateAuthUI();
+}
 
-(async function initAuth() {
-    try {
-        const data = await apiCall('/check_session.php');
-        if (data.logged_in && data.user) {
-            currentUser = data.user;
-        }
-    } catch (e) {
-        // Not logged in — that's fine
-    }
-    updateAuthUI();
-})();
-
-// ==================== Signup ====================
+// ================== SIGNUP ==================
 
 document.getElementById('signupBtn').addEventListener('click', () => {
     openModal(`
@@ -215,25 +295,29 @@ document.getElementById('signupBtn').addEventListener('click', () => {
         document.getElementById('adminCodeGroup').style.display = this.value === 'admin' ? 'block' : 'none';
     });
 
-    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const name = document.getElementById('signupName').value.trim();
         const email = document.getElementById('signupEmail').value.trim();
         const password = document.getElementById('signupPassword').value;
         const role = document.getElementById('signupRole').value;
         const adminCode = document.getElementById('adminCode')?.value || '';
+        const finalRole = (role === 'admin' && adminCode === 'ADMIN2024') ? 'admin' : 'user';
 
-        try {
-            const data = await apiCall('/signup.php', 'POST', {
-                name, email, password, role, admin_code: adminCode
-            });
-            currentUser = data.user;
-            updateAuthUI();
-            closeModal();
-            showToast('Account created! Welcome, ' + data.user.name + '.', 'success');
-        } catch (err) {
-            showToast(err.message, 'error');
+        if (password.length < 6) {
+            showToast('Password must be at least 6 characters.', 'error');
+            return;
         }
+
+        const result = createUser(name, email, password, finalRole);
+        if (result.error) {
+            showToast(result.error, 'error');
+            return;
+        }
+
+        showToast('Account created! Welcome, ' + name + '.', 'success');
+        setCurrentUser({ id: result.user.id, name: result.user.name, email: result.user.email, role: result.user.role });
+        closeModal();
     });
 
     document.getElementById('switchToLogin')?.addEventListener('click', (e) => {
@@ -243,7 +327,7 @@ document.getElementById('signupBtn').addEventListener('click', () => {
     });
 });
 
-// ==================== Login ====================
+// ================== LOGIN ==================
 
 document.getElementById('loginBtn').addEventListener('click', () => {
     openModal(`
@@ -267,20 +351,20 @@ document.getElementById('loginBtn').addEventListener('click', () => {
         </form>
     `);
 
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const email = document.getElementById('loginEmail').value.trim();
         const password = document.getElementById('loginPassword').value;
 
-        try {
-            const data = await apiCall('/login.php', 'POST', { email, password });
-            currentUser = data.user;
-            updateAuthUI();
-            closeModal();
-            showToast('Logged in as ' + data.user.name + ' (' + data.user.role + ')', 'success');
-        } catch (err) {
-            showToast(err.message, 'error');
+        const result = authenticateUser(email, password);
+        if (result.error) {
+            showToast(result.error, 'error');
+            return;
         }
+
+        setCurrentUser(result.user);
+        closeModal();
+        showToast('Logged in as ' + result.user.name + ' (' + result.user.role + ')', 'success');
     });
 
     document.getElementById('switchToSignup')?.addEventListener('click', (e) => {
@@ -290,18 +374,14 @@ document.getElementById('loginBtn').addEventListener('click', () => {
     });
 });
 
-// ==================== Logout ====================
+// ================== LOGOUT ==================
 
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-    try {
-        await apiCall('/logout.php', 'POST');
-    } catch (e) { /* ignore */ }
-    currentUser = null;
-    updateAuthUI();
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    clearCurrentUser();
     showToast('Logged out successfully.', 'success');
 });
 
-// ==================== Search ====================
+// ================== SEARCH ==================
 
 const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
@@ -353,12 +433,26 @@ document.querySelectorAll('.category-card').forEach(card => {
     card.addEventListener('click', () => {
         const category = card.dataset.category;
         searchInput.value = category;
-        searchPlace(category);
+
+        if (category === 'hotels') {
+            const reviews = getReviews().filter(r => r.place.toLowerCase().includes('hotel'));
+            const html = reviews.map(r => `
+                <div class="hotel-result">
+                    <h4>${r.place}</h4>
+                    <p class="hotel-meta">${'⭐'.repeat(r.rating)} (${r.rating}/5)</p>
+                    <p class="hotel-desc">${r.review}</p>
+                </div>
+            `).join('');
+            searchResults.innerHTML = `<h3 style="margin-bottom:16px;">🏨 ${reviews.length} Hotel Reviews</h3>${html || '<p>No reviews yet.</p>'}`;
+            searchResults.classList.add('show');
+        } else {
+            searchPlace(category);
+        }
         document.getElementById('explore').scrollIntoView({ behavior: 'smooth' });
     });
 });
 
-// ==================== Review Buttons ====================
+// ================== REVIEW SUBMISSION ==================
 
 document.querySelectorAll('.review-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -410,7 +504,7 @@ document.querySelectorAll('.review-btn').forEach(btn => {
                 });
             });
         });
-        document.getElementById('reviewForm').addEventListener('submit', async function(e) {
+        document.getElementById('reviewForm').addEventListener('submit', function(e) {
             e.preventDefault();
             if (selectedRating === 0) {
                 showToast('Please select a rating.', 'error');
@@ -422,22 +516,16 @@ document.querySelectorAll('.review-btn').forEach(btn => {
                 return;
             }
             const userName = currentUser ? currentUser.name : 'Anonymous';
-            try {
-                await apiCall('/reviews.php', 'POST', {
-                    place, rating: selectedRating, review, user_name: userName
-                });
-                closeModal();
-                showToast('Review for ' + place + ' submitted! Thank you.', 'success');
-            } catch (err) {
-                showToast(err.message, 'error');
-            }
+            addReview(place, selectedRating, review, userName);
+            closeModal();
+            showToast('Review for ' + place + ' submitted!', 'success');
         });
     });
 });
 
-// ==================== Complaint Form ====================
+// ================== COMPLAINT FORM ==================
 
-document.getElementById('complaintForm').addEventListener('submit', async function(e) {
+document.getElementById('complaintForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const name = document.getElementById('complaintName').value.trim();
     const place = document.getElementById('complaintPlace').value.trim();
@@ -449,135 +537,85 @@ document.getElementById('complaintForm').addEventListener('submit', async functi
         return;
     }
 
-    try {
-        const data = await apiCall('/complaints.php', 'POST', {
-            name, place, title, description
-        });
-        this.reset();
+    addComplaint(name, place, title, description, currentUser ? currentUser.id : null);
+    this.reset();
 
-        // If admin is logged in, refresh dashboard table
-        if (currentUser && currentUser.role === 'admin') {
-            loadDashboardData();
-        }
-
-        showToast('Complaint submitted successfully!', 'success');
-    } catch (err) {
-        showToast(err.message, 'error');
+    if (currentUser && currentUser.role === 'admin') {
+        loadDashboardData();
     }
+
+    showToast('Complaint submitted! Stored locally.', 'success');
 });
 
 // ==================== Dashboard (Admin Only) ====================
 
-async function loadDashboardData() {
+function loadDashboardData() {
     if (!currentUser || currentUser.role !== 'admin') return;
+    const complaints = getComplaints();
 
-    try {
-        const data = await apiCall('/dashboard.php');
+    const total = complaints.length;
+    const pending = complaints.filter(c => c.status === 'pending').length;
+    const resolved = complaints.filter(c => c.status === 'resolved').length;
 
-        // Update stats
-        document.getElementById('totalComplaints').textContent = data.stats.total.toLocaleString();
-        document.getElementById('pendingComplaints').textContent = data.stats.pending.toLocaleString();
-        document.getElementById('resolvedComplaints').textContent = data.stats.resolved.toLocaleString();
-        document.getElementById('avgDays').textContent = data.stats.avg_days;
+    document.getElementById('totalComplaints').textContent = total.toLocaleString();
+    document.getElementById('pendingComplaints').textContent = pending.toLocaleString();
+    document.getElementById('resolvedComplaints').textContent = resolved.toLocaleString();
+    document.getElementById('avgDays').textContent = '—';
 
-        // Update table
-        const tbody = document.querySelector('#complaintTable tbody');
-        tbody.innerHTML = '';
-        data.complaints.forEach(c => {
-            const statusClass = c.status === 'pending' ? 'status-pending' : 'status-resolved';
-            const statusLabel = c.status.charAt(0).toUpperCase() + c.status.slice(1);
-            const isResolved = c.status === 'resolved';
-            const actionBtn = isResolved
-                ? '<button class="btn btn-sm btn-outline" disabled>Resolved</button>'
-                : `<button class="btn btn-sm btn-green resolve-btn" data-id="${c.id}">Resolve</button>`;
+    const tbody = document.querySelector('#complaintTable tbody');
+    tbody.innerHTML = '';
+    complaints.forEach(c => {
+        const statusClass = c.status === 'pending' ? 'status-pending' : 'status-resolved';
+        const statusLabel = c.status.charAt(0).toUpperCase() + c.status.slice(1);
+        const isResolved = c.status === 'resolved';
+        const actionBtn = isResolved
+            ? '<button class="btn btn-sm btn-outline" disabled>Resolved</button>'
+            : `<button class="btn btn-sm btn-green resolve-btn" data-id="${c.id}">Resolve</button>`;
 
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><span class="badge-id">#${c.id}</span></td>
-                <td>${c.title}</td>
-                <td>${c.place}</td>
-                <td><span class="status ${statusClass}">${statusLabel}</span></td>
-                <td>${actionBtn}</td>
-            `;
-            tbody.appendChild(row);
-        });
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><span class="badge-id">#${c.id}</span></td>
+            <td>${c.title}</td>
+            <td>${c.place}</td>
+            <td><span class="status ${statusClass}">${statusLabel}</span></td>
+            <td>${actionBtn}</td>
+        `;
+        tbody.appendChild(row);
+    });
 
-        // Re-bind resolve buttons
-        document.querySelectorAll('.resolve-btn').forEach(btn => {
-            btn.addEventListener('click', resolveComplaint);
-        });
-
-    } catch (err) {
-        console.error('Failed to load dashboard:', err);
-    }
+    document.querySelectorAll('.resolve-btn').forEach(btn => {
+        btn.addEventListener('click', resolveComplaint);
+    });
 }
 
-// ==================== Resolve Complaint (Admin Only) ====================
+function resolveComplaint() {
+    const id = this.dataset.id;
+    const row = this.closest('tr');
+    resolveComplaintById(id);
 
-async function resolveComplaint() {
-    const btn = this;
-    const id = parseInt(btn.dataset.id);
-    const row = btn.closest('tr');
-
-    try {
-        await apiCall('/resolve.php', 'POST', { id });
-        const statusCell = row.querySelector('.status');
-        statusCell.className = 'status status-resolved';
-        statusCell.textContent = 'Resolved';
-        btn.textContent = 'Resolved';
-        btn.disabled = true;
-        btn.className = 'btn btn-sm btn-outline';
-        loadDashboardData();
-        showToast('Complaint #' + id + ' marked as resolved.', 'success');
-    } catch (err) {
-        showToast(err.message, 'error');
-    }
+    const statusCell = row.querySelector('.status');
+    statusCell.className = 'status status-resolved';
+    statusCell.textContent = 'Resolved';
+    this.textContent = 'Resolved';
+    this.disabled = true;
+    this.className = 'btn btn-sm btn-outline';
+    loadDashboardData();
+    showToast('Complaint #' + id + ' marked as resolved.', 'success');
 }
 
-// ==================== Load public hero stats from DB ====================
+// ==================== Load public hero stats ====================
 
-(async function loadPublicStats() {
-    try {
-        const data = await apiCall('/stats.php');
-        const statDivs = document.querySelectorAll('.hero-stats div strong');
-        if (statDivs.length >= 3) {
-            statDivs[0].textContent = data.stats.reviews;
-            statDivs[1].textContent = data.stats.complaints;
-            statDivs[2].textContent = data.stats.resolved;
-        }
-    } catch (e) {
-        // Keep default static numbers if API fails
+(function loadPublicStats() {
+    const reviews = getReviews();
+    const complaints = getComplaints();
+    const resolved = complaints.filter(c => c.status === 'resolved').length;
+
+    const statDivs = document.querySelectorAll('.hero-stats div strong');
+    if (statDivs.length >= 3) {
+        statDivs[0].textContent = reviews.length.toLocaleString();
+        statDivs[1].textContent = complaints.length.toLocaleString();
+        statDivs[2].textContent = resolved.toLocaleString();
     }
 })();
 
-// ==================== Load reviews from DB onto page ====================
-
-(async function loadReviews() {
-    const container = document.getElementById('reviewsList');
-    try {
-        const data = await apiCall('/reviews.php');
-        if (!data.reviews || data.reviews.length === 0) {
-            container.innerHTML = '<p style="text-align:center;color:var(--text-light);">No reviews yet. Be the first!</p>';
-            return;
-        }
-        container.innerHTML = data.reviews.map(r => {
-            const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
-            const date = new Date(r.created_at).toLocaleDateString();
-            return `
-                <div class="review-item">
-                    <div class="review-item-header">
-                        <span class="review-item-place">${r.place}</span>
-                        <span class="review-item-rating">${stars}</span>
-                    </div>
-                    <div class="review-item-text">${r.review}</div>
-                    <div class="review-item-meta">
-                        <span>👤 ${r.user_name}</span>
-                        <span>📅 ${date}</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    } catch (e) {
-        container.innerHTML = '<p style="text-align:center;color:var(--text-light);">Could not load reviews.</p>';
-    }
 })();
