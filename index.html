@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelVoice - Better Tourism Through Feedback</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<header>
+    <div class="header-container">
+        <div class="logo">
+            <span class="logo-icon">🌍</span>
+            <span class="logo-text">TravelVoice</span>
+        </div>
+
+        <nav id="nav-menu">
+            <a href="#home" class="active">Home</a>
+            <a href="#explore">Explore</a>
+            <a href="#reviews">Reviews</a>
+            <a href="#complaints">Complaints</a>
+            <!-- Dashboard link: hidden for regular users, shown only for admin via JS -->
+            <a href="#dashboard" class="nav-admin" id="navDashboard">Dashboard</a>
+            <a href="#about">About</a>
+        </nav>
+
+        <div class="header-actions">
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+            </button>
+
+            <!-- Logged-in user badge (hidden by default, shown via JS) -->
+            <div class="user-badge" id="userBadge" style="display:none;">
+                <span id="userNameDisplay"></span>
+                <span class="user-role-badge" id="userRoleBadge"></span>
+                <button class="btn btn-sm btn-outline" id="logoutBtn">Logout</button>
+            </div>
+
+            <!-- Login/Signup buttons (hidden when logged in) -->
+            <div id="authButtons">
+                <button class="btn btn-outline" id="loginBtn">Login</button>
+                <button class="btn btn-primary" id="signupBtn">Sign Up</button>
+            </div>
+
+            <button class="hamburger" id="hamburger" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<section class="hero" id="home">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <span class="hero-badge">Your Feedback Matters</span>
+        <h1>Your Voice,<br>Better <span class="highlight">Tourism</span></h1>
+        <p>Review places, raise complaints, and help improve tourism for everyone.</p>
+        <div class="hero-buttons">
+            <a href="#reviews" class="btn btn-primary btn-lg">
+                <i class="fas fa-star"></i> Write a Review
+            </a>
+            <a href="#complaints" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-exclamation-triangle"></i> Lodge a Complaint
+            </a>
+        </div>
+        <div class="hero-stats">
+            <div><strong>2.5K+</strong> Reviews</div>
+            <div><strong>2.1K</strong> Complaints</div>
+            <div><strong>89%</strong> Resolved</div>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="explore">
+    <div class="container">
+        <div class="section-header">
+            <h2>Explore Places</h2>
+            <p>Discover the best places to visit, eat, and stay.</p>
+        </div>
+
+        <div class="search-bar">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="searchInput" placeholder="Search hotels, restaurants, attractions...">
+            <button class="btn btn-primary" id="searchBtn"><i class="fas fa-arrow-right"></i></button>
+        </div>
+
+        <div class="category-grid">
+            <div class="category-card" data-category="hotels">
+                <div class="category-icon">🏨</div>
+                <span>Hotels</span>
+            </div>
+            <div class="category-card" data-category="restaurants">
+                <div class="category-icon">🍽</div>
+                <span>Restaurants</span>
+            </div>
+            <div class="category-card" data-category="attractions">
+                <div class="category-icon">🏛</div>
+                <span>Attractions</span>
+            </div>
+            <div class="category-card" data-category="transport">
+                <div class="category-icon">🚍</div>
+                <span>Transport</span>
+            </div>
+            <div class="category-card" data-category="guides">
+                <div class="category-icon">👤</div>
+                <span>Guides</span>
+            </div>
+            <div class="category-card" data-category="others">
+                <div class="category-icon">◉</div>
+                <span>Others</span>
+            </div>
+        </div>
+
+        <div id="searchResults" class="search-results"></div>
+
+        <!-- ===== MEDIA GALLERY BY PLACE ===== -->
+        <div class="section-header" style="margin-top:60px;">
+            <h2>Place Gallery</h2>
+            <p>Photos and videos uploaded by the community.</p>
+        </div>
+        <div id="mediaGallery" class="media-gallery">
+            <p style="text-align:center;color:var(--text-light);">Loading gallery...</p>
+        </div>
+    </div>
+</section>
+
+<section class="section section-alt" id="reviews">
+    <div class="container">
+        <div class="section-header">
+            <h2>Top Rated Places</h2>
+            <p>See what travelers are saying about the best spots.</p>
+        </div>
+
+        <div class="review-cards" id="reviewCards">
+            <div class="review-card" data-rating="4.6">
+                <div class="card-img">
+                    <img src="https://picsum.photos/300/150?random=1" alt="Hotel Himalayan">
+                    <div class="card-rating">⭐ 4.6</div>
+                </div>
+                <div class="card-body">
+                    <h3>Hotel Himalayan</h3>
+                    <p class="card-location"><i class="fas fa-map-pin"></i> Pokhara</p>
+                    <div class="card-stars">★★★★★</div>
+                    <button class="btn btn-sm btn-outline review-btn" data-place="Hotel Himalayan">Write Review</button>
+                </div>
+            </div>
+
+            <div class="review-card" data-rating="4.3">
+                <div class="card-img">
+                    <img src="https://picsum.photos/301/150?random=2" alt="Mo:Mo Station">
+                    <div class="card-rating">⭐ 4.3</div>
+                </div>
+                <div class="card-body">
+                    <h3>Mo:Mo Station</h3>
+                    <p class="card-location"><i class="fas fa-map-pin"></i> Lakeside</p>
+                    <div class="card-stars">★★★★☆</div>
+                    <button class="btn btn-sm btn-outline review-btn" data-place="Mo:Mo Station">Write Review</button>
+                </div>
+            </div>
+
+            <div class="review-card" data-rating="4.8">
+                <div class="card-img">
+                    <img src="https://picsum.photos/302/150?random=3" alt="Sarangkot View Point">
+                    <div class="card-rating">⭐ 4.8</div>
+                </div>
+                <div class="card-body">
+                    <h3>Sarangkot View Point</h3>
+                    <p class="card-location"><i class="fas fa-map-pin"></i> Pokhara</p>
+                    <div class="card-stars">★★★★★</div>
+                    <button class="btn btn-sm btn-outline review-btn" data-place="Sarangkot View Point">Write Review</button>
+                </div>
+            </div>
+
+            <div class="review-card" data-rating="4.7">
+                <div class="card-img">
+                    <img src="https://picsum.photos/303/150?random=4" alt="Peace Stupa">
+                    <div class="card-rating">⭐ 4.7</div>
+                </div>
+                <div class="card-body">
+                    <h3>Peace Stupa</h3>
+                    <p class="card-location"><i class="fas fa-map-pin"></i> Anadu Hill</p>
+                    <div class="card-stars">★★★★★</div>
+                    <button class="btn btn-sm btn-outline review-btn" data-place="Peace Stupa">Write Review</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== RECENT REVIEWS FROM DATABASE ===== -->
+        <div class="section-header" style="margin-top:60px;">
+            <h2>Recent Reviews</h2>
+            <p>Latest feedback from travelers.</p>
+        </div>
+        <div id="reviewsList" class="reviews-list">
+            <p style="text-align:center;color:var(--text-light);">Loading reviews...</p>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="complaints">
+    <div class="container">
+        <div class="section-header">
+            <h2>Lodge a Complaint</h2>
+            <p>Report issues you've encountered during your travels.</p>
+        </div>
+
+        <div class="form-container">
+            <form id="complaintForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="complaintName"><i class="fas fa-user"></i> Your Name</label>
+                        <input type="text" id="complaintName" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="complaintPlace"><i class="fas fa-map-marker-alt"></i> Place</label>
+                        <input type="text" id="complaintPlace" placeholder="Name of the place" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="complaintTitle"><i class="fas fa-heading"></i> Complaint Title</label>
+                    <input type="text" id="complaintTitle" placeholder="Brief title for your complaint" required>
+                </div>
+                <div class="form-group">
+                    <label for="complaintBody"><i class="fas fa-pen"></i> Description</label>
+                    <textarea id="complaintBody" placeholder="Describe your experience in detail..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-paper-plane"></i> Submit Complaint
+                </button>
+            </form>
+            <div id="complaintToast" class="toast"></div>
+        </div>
+    </div>
+</section>
+
+<!--
+  ================================================================
+  ADMIN-ONLY: DASHBOARD SECTION
+  ================================================================
+  This section is HIDDEN from regular users via CSS (display: none).
+  Only users who login with role="admin" will see it.
+  
+  JavaScript checks localStorage for the logged-in user's role.
+  If role === "admin", it adds class "visible" to this section
+  and shows the "Dashboard" nav link.
+  
+  HOW TO BECOME ADMIN:
+  - Sign up with the admin code "ADMIN2024" (shown in signup form)
+  - Or login with the pre-seeded admin account:
+      Email: admin@travelvoice.com
+      Password: admin123
+  ================================================================
+-->
+<section class="section section-alt dashboard-section" id="dashboard">
+    <div class="container">
+        <div class="section-header">
+            <h2>Dashboard Overview</h2>
+            <p>Track complaints and their resolution status. <strong>(Admin Only)</strong></p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card stat-blue">
+                <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
+                <div class="stat-info">
+                    <h3 id="totalComplaints">2,153</h3>
+                    <p>Total Complaints</p>
+                </div>
+            </div>
+            <div class="stat-card stat-yellow">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                <div class="stat-info">
+                    <h3 id="pendingComplaints">308</h3>
+                    <p>Pending</p>
+                </div>
+            </div>
+            <div class="stat-card stat-green">
+                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-info">
+                    <h3 id="resolvedComplaints">1,845</h3>
+                    <p>Resolved</p>
+                </div>
+            </div>
+            <div class="stat-card stat-purple">
+                <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+                <div class="stat-info">
+                    <h3 id="avgDays">3.6</h3>
+                    <p>Avg. Days to Resolve</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="complaintTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Complaint</th>
+                        <th>Place</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge-id">#1254</span></td>
+                        <td>Overcharged in Hotel</td>
+                        <td>Hotel Himalayan</td>
+                        <td><span class="status status-pending">Pending</span></td>
+                        <td><button class="btn btn-sm btn-green resolve-btn" data-id="#1254">Resolve</button></td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-id">#1253</span></td>
+                        <td>Dirty Environment</td>
+                        <td>Lakeside Area</td>
+                        <td><span class="status status-resolved">Resolved</span></td>
+                        <td><button class="btn btn-sm btn-outline" disabled>Resolved</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ================ ADMIN: MEDIA UPLOAD PANEL ================ -->
+        <div class="section-header" style="margin-top:50px;">
+            <h2>Upload Place Media</h2>
+            <p>Add photos and videos for any place. Supported: JPG, PNG, GIF, WebP, MP4, WebM</p>
+        </div>
+        <div class="form-container" style="max-width:700px;">
+            <form id="mediaUploadForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label><i class="fas fa-map-marker-alt"></i> Place Name</label>
+                    <input type="text" id="mediaPlaceName" list="placeList" placeholder="e.g. Hotel Himalayan" required>
+                    <datalist id="placeList">
+                        <option value="Hotel Himalayan">
+                        <option value="Mo:Mo Station">
+                        <option value="Sarangkot View Point">
+                        <option value="Peace Stupa">
+                        <option value="Pokhara Bus Terminal">
+                        <option value="City Taxi Service">
+                        <option value="Lake View Restaurant">
+                        <option value="Fewa Park">
+                    </datalist>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-images"></i> Select Files</label>
+                    <input type="file" id="mediaFiles" name="media[]" multiple accept="image/*,video/mp4,video/webm,video/ogg" required>
+                    <p style="font-size:.8rem;color:var(--text-light);margin-top:6px;">You can select multiple files at once.</p>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-upload"></i> Upload
+                </button>
+            </form>
+            <div id="uploadProgress" class="toast"></div>
+        </div>
+
+        <!-- Admin: manage uploaded media -->
+        <div style="margin-top:30px;">
+            <h3 style="margin-bottom:16px;">Manage Media</h3>
+            <div id="adminMediaList" class="media-admin-grid">
+                <p style="color:var(--text-light);">Select a place to view its media.</p>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<section class="section" id="about">
+    <div class="container">
+        <div class="about-content">
+            <div class="about-text">
+                <span class="about-badge">About Us</span>
+                <h2>Making Tourism <span class="highlight">Better Together</span></h2>
+                <p>TravelVoice is a community-driven tourism feedback platform where travelers can review places, report problems, and help improve tourism for everyone.</p>
+                <div class="about-features">
+                    <div><i class="fas fa-check-circle" style="color: var(--green);"></i> Authentic Reviews</div>
+                    <div><i class="fas fa-check-circle" style="color: var(--green);"></i> Fast Complaint Resolution</div>
+                    <div><i class="fas fa-check-circle" style="color: var(--green);"></i> Community Driven</div>
+                </div>
+            </div>
+            <div class="about-image">
+                <div class="about-illustration">
+                    <span>🌍</span>
+                    <span>✈️</span>
+                    <span>🏔️</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <div class="logo">
+                    <span class="logo-icon">🌍</span>
+                    <span class="logo-text">TravelVoice</span>
+                </div>
+                <p>Your voice makes tourism better.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <a href="#home">Home</a>
+                <a href="#reviews">Reviews</a>
+                <a href="#complaints">Complaints</a>
+            </div>
+            <div class="footer-links">
+                <h4>Support</h4>
+                <a href="#about">About Us</a>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+            </div>
+            <div class="footer-links">
+                <h4>Connect</h4>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 TravelVoice. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+        <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+        <div id="modalContent"></div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
